@@ -1,0 +1,91 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class characterMovement : MonoBehaviour
+{
+
+    Animator animator;
+    int isWalkingHash;
+    int isRunningHash;
+
+    // Variable to store the instance of the PlayerInput
+    PlayerInput input;
+
+    Vector2 currentMovement;
+    bool movementPressed;
+    bool runPressed;
+
+
+    // Awake is called when the script instance is being loaded
+    void Awake()
+    {
+        input = new PlayerInput();
+
+        input.CharacterControls.Movement.performed += ctx => Debug.Log(ctx.ReadValueAsObject());
+
+        input.CharacterControls.Movement.performed += ctx => {
+            currentMovement = ctx.ReadValue<Vector2>();
+            movementPressed = currentMovement.x != 0 || currentMovement.y !=0;
+        };
+        input.CharacterControls.Run.performed += ctx => runPressed = ctx.ReadValueAsButton();
+    }        
+    
+
+    // Start is called before the first frame update
+    void Start()
+    {
+            // Set the animator reference
+            animator = GetComponent<Animator>();
+
+            // Set the ID references
+            isWalkingHash = Animator.StringToHash("isWalking");
+            isRunningHash = Animator.StringToHash("isRunning");
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        handleMovement();
+    }
+
+    void handleRotation();
+
+    void handleMovement()
+    {
+        // Get parameter values from animator
+        bool isRunning = animator.GetBool(isRunningHash);
+        bool isWalking = animator.GetBool(isWalkingHash);  
+
+            // start walking if movement pressed is true and not already walking
+            if (movementPressed && !isWalking){
+                animator.SetBool(isWalkingHash, true);
+            }
+            // stop walking if movement pressed is false and not already walking
+            if (!movementPressed && isWalking){
+                animator.SetBool(isWalkingHash, false);
+            }
+            if ((movementPressed && runPressed) && !isRunning){
+                animator.SetBool(isRunningHash, true);
+            }
+            if ((!movementPressed || !runPressed) && isRunning){
+                animator.SetBool(isRunningHash, false);
+            }
+
+
+    }
+
+    void OnEnable()
+    {
+        // enable the character controls action map
+        input.CharacterControls.Enable();
+    }
+
+    void OnDisable()
+    {
+        // disable the character controls action map
+        input.CharacterControls.Disable();
+    }
+
+}
